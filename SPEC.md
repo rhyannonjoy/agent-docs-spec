@@ -1095,7 +1095,8 @@ becomes available.
 
 **Thank you to contributors!**
 
-- Claude API (web_fetch tool) limitations contributed by [Rhyannon Rodriguez](https://github.com/rhyannonjoy)
+- Claude API (web_fetch tool) limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
+- Google Gemini (URL context) limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
 
 ### What This Means for Threshold Selection
 
