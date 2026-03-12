@@ -738,14 +738,19 @@ and navigate content effectively.
 - **What it checks**: Whether documentation pages include a directive, visible
   to agents but not necessarily to human readers, pointing to `llms.txt` or
   another discovery resource.
-- **Why it matters**: Anthropic embeds a directive at the top of every Claude
-  Code docs page telling agents to fetch the documentation index at `llms.txt`.
-  In practice, agents see this directive, follow it, and use the index to find
-  what they need. It's simple, low-effort, and observed to work in real agent
-  workflows. This is the agent equivalent of a "You Are Here" marker. The
-  directive can be visually hidden (e.g., using a CSS clip-rect technique) as
-  long as it remains in the DOM and survives HTML-to-markdown conversion.
-  Avoid `display: none`, which some converters strip.
+- **Why it matters**: Anthropic's Claude Code documentation
+  (`code.claude.com/docs`, hosted on Mintlify) includes a directive as a
+  blockquote at the top of every markdown page telling agents to fetch the
+  documentation index at `llms.txt`. In practice, agents see this directive,
+  follow it, and use the index to find what they need. It's simple,
+  low-effort, and observed to work in real agent workflows. This is the
+  agent equivalent of a "You Are Here" marker. The directive can be visually
+  hidden (e.g., using a CSS clip-rect technique) as long as it remains in
+  the DOM and survives HTML-to-markdown conversion. Avoid `display: none`,
+  which some converters strip. The directive should be present in
+  server-rendered HTML or in the markdown source; avoid relying solely on
+  client-side JavaScript injection, since most agents fetch pages without
+  executing JS.
 - **Result levels**:
   - **Pass**: A directive pointing to `llms.txt` (or equivalent index) is
     present in page HTML, ideally near the top of the content.
