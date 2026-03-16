@@ -3,11 +3,12 @@
 |              |                                                              |
 |--------------|--------------------------------------------------------------|
 | **Status**   | Draft                                                        |
-| **Version**  | 0.2.0                                                        |
+| **Version**  | 0.2.1                                                        |
 | **Date**     | 2026-03-15                                                   |
 | **Author**   | Dachary Carey + community contributors                       |
 | **URL**      | https://agentdocsspec.com                                    |
 | **Repository** | https://github.com/agent-ecosystem/agent-docs-spec                |
+| **Reference Implementation** | [`afdocs`](https://github.com/agent-ecosystem/afdocs) (npm: [`afdocs`](https://www.npmjs.com/package/afdocs)) |
 
 ## Abstract
 
@@ -591,7 +592,10 @@ that's only optimized for the markdown path is leaving most agents behind.
 - **Notes**: If this check fails, size-related checks (`page-size-html`,
   `content-start-position`) still run but their results should be
   interpreted with caution, since they are measuring a shell rather than
-  actual content. If the site passes `markdown-url-support` or
+  actual content. This is a recommendation for report consumers and
+  implementations presenting results; it does not require downstream
+  checks to declare a dependency on `rendering-strategy` or alter their
+  own pass/warn/fail logic. If the site passes `markdown-url-support` or
   `content-negotiation`, that provides partial mitigation: agents that
   request markdown may still get content even when the HTML path is broken.
 
@@ -708,10 +712,16 @@ heuristics.
   Generic headers like "Step 1" repeated across all variants are
   indistinguishable. Headers like "Step 1 (Python/PyMongo)" preserve the
   filtering context that the UI provided to human readers.
-- **Result levels**:
-  - **Pass**: Headers within serialized tabbed sections include variant context.
-  - **Warn**: Headers are present but generic/repeated across variants.
-  - **Fail**: No distinguishing headers in serialized tabbed content.
+- **Result levels** (evaluated both within individual tab groups and across
+  tab groups on the same page; the overall result is the worst of both):
+  - **Pass**: <=25% of headers within tabbed sections are generic (repeated
+    across variants without distinguishing context).
+  - **Warn**: 25-50% of headers are generic across variants.
+  - **Fail**: >50% of headers are generic, or identical header sets are
+    repeated across separate tab groups on the same page with no variant
+    context.
+  These thresholds are defaults; implementations should allow them to be
+  configured.
 - **Automation**: Heuristic. Requires detecting tabbed sections and analyzing
   header patterns within them.
 
@@ -732,10 +742,13 @@ heuristics.
 - **Result levels**:
   - **Pass**: All code fences in the markdown content are properly opened and
     closed.
-  - **Warn**: Code fences are technically balanced but use inconsistent
-    delimiters (e.g., opening with `` ``` `` and closing with `~~~`), which
-    some parsers may not match correctly.
   - **Fail**: One or more unclosed code fences detected.
+- **Notes on delimiter matching**: Per the CommonMark spec, a backtick fence
+  (`` ``` ``) can only be closed by another backtick fence of equal or greater
+  length, and likewise for tilde fences (`~~~`). Opening with `` ``` `` and
+  attempting to close with `~~~` leaves the backtick fence unclosed. There is
+  no intermediate "mismatched but balanced" state; mismatched delimiters
+  produce unclosed fences and should be reported as failures.
 - **Automation**: Full. Parse the markdown for fence delimiters (`` ``` `` and
   `~~~`, with optional info strings) and verify each opening delimiter has a
   matching close. Run against markdown served via `.md` URLs, content
@@ -814,10 +827,12 @@ and navigate content effectively.
   executing JS.
 - **Result levels**:
   - **Pass**: A directive pointing to `llms.txt` (or equivalent index) is
-    present in page HTML, ideally near the top of the content.
-  - **Warn**: A directive exists but is buried deep in the page (may be past
-    truncation).
-  - **Fail**: No agent-facing directive detected.
+    present in all (or nearly all) documentation pages, ideally near the top
+    of the content.
+  - **Warn**: A directive exists in some pages but is missing from others, or
+    is present but buried deep in the page (past 50% of content, where it may
+    be past truncation).
+  - **Fail**: No agent-facing directive detected in any tested page.
 - **Automation**: Heuristic. Search the page HTML for patterns like links to
   `llms.txt`, phrases like "documentation index", or directives near the top
   of the content area. Check both visible text and visually-hidden elements.
@@ -843,13 +858,15 @@ HTML content without anyone noticing.
   produce redirect chains or broken links. Unlike `llms-txt-links-resolve`
   (which catches broken links), this check catches missing coverage: pages
   that exist on the site but aren't represented in `llms.txt`.
-- **Result levels**:
-  - **Pass**: `llms.txt` links cover the site's primary pages and no links
-    point to removed content.
-  - **Warn**: Some live pages are missing from `llms.txt`, or `llms.txt`
-    hasn't been updated recently relative to site changes.
-  - **Fail**: `llms.txt` contains significant stale links or is missing
-    large sections of the documentation.
+- **Result levels** (based on coverage of sitemap doc pages, excluding
+  non-doc pages like blog posts, pricing, and login pages):
+  - **Pass**: `llms.txt` links cover >=95% of the site's primary pages.
+  - **Warn**: `llms.txt` links cover 80-95% of primary pages (some live
+    pages are missing).
+  - **Fail**: `llms.txt` links cover <80% of primary pages (missing large
+    sections of the documentation).
+  These thresholds are defaults; implementations should allow them to be
+  configured.
 - **Automation**: Heuristic. Compare links in `llms.txt` against a sitemap
   or crawled page list; flag pages present in the sitemap but absent from
   `llms.txt`. Check `Last-Modified` or `ETag` headers on `llms.txt` vs.
@@ -869,12 +886,19 @@ HTML content without anyone noticing.
   leaving agents with outdated instructions or code examples. This is
   particularly insidious because agents that receive the markdown version
   have no signal that a newer HTML version exists.
-- **Result levels**:
-  - **Pass**: Markdown and HTML versions contain equivalent content.
-  - **Warn**: Minor differences detected (formatting variations, whitespace,
-    navigation elements present in one but not the other).
-  - **Fail**: Substantive content differences: missing sections, outdated
-    code examples, or different instructions between the two versions.
+- **Result levels** (based on the percentage of content segments in the
+  HTML version that are missing from the markdown version, after
+  normalizing whitespace, case, and formatting):
+  - **Pass**: <5% of content segments missing (or page has fewer than 10
+    segments, which is too small to produce meaningful parity scores).
+  - **Warn**: 5-20% of content segments missing (minor differences:
+    formatting variations, navigation elements present in one but not the
+    other).
+  - **Fail**: >=20% of content segments missing (substantive content
+    differences: missing sections, outdated code examples, or different
+    instructions between the two versions).
+  These thresholds are defaults; implementations should allow them to be
+  configured.
 - **Automation**: Heuristic. Fetch both versions, extract text content from
   HTML (strip tags), and compare key sections (headings, code blocks,
   paragraph content) for meaningful differences. Minor formatting
@@ -899,7 +923,11 @@ HTML content without anyone noticing.
     3600, or uses `must-revalidate` with `ETag`/`Last-Modified`).
   - **Warn**: Moderate caching (1-24 hours) that could delay updates.
   - **Fail**: Aggressive caching (over 24 hours) with no revalidation
-    mechanism, or no cache headers at all (ambiguous behavior).
+    mechanism, or no cache-related headers at all (ambiguous behavior).
+    An exception: responses that lack `Cache-Control` and `Expires` but
+    include `ETag` or `Last-Modified` should pass, since these validation
+    headers enable conditional revalidation by browsers and CDNs even
+    without explicit cache directives.
 - **Automation**: Full. Inspect `Cache-Control`, `Expires`, `ETag`, and
   `Last-Modified` response headers.
 
@@ -1258,6 +1286,33 @@ welcome.
 - [OtterlyAI, "llms.txt and AI Visibility: Results from OtterlyAI's GEO Study"](https://otterly.ai/blog/the-llms-txt-experiment/)
 
 ## Changelog
+
+### v0.2.1 (2026-03-15)
+
+Clarifications from implementing the `afdocs` conformance tool against the
+spec. No new checks; all changes refine existing check definitions.
+
+- `markdown-code-fence-validity`: Removed warn level. Per CommonMark,
+  mismatched delimiters (opening ``` closing ~~~) produce unclosed fences,
+  not a distinct "mismatched but balanced" state. The described warn case
+  was indistinguishable from a fail.
+- `llms-txt-directive`: Clarified that pass requires the directive in all
+  (or nearly all) pages, not just presence in any single page. Clarified
+  warn triggers: missing from some pages, or present but buried past 50%.
+- `llms-txt-freshness`: Added default thresholds (>=95% pass, 80-95% warn,
+  <80% fail) for sitemap coverage. The previous language was qualitative;
+  implementations need concrete defaults for automation.
+- `markdown-content-parity`: Added default thresholds (<5% missing pass,
+  5-20% warn, >=20% fail) for content segment comparison. Same rationale.
+- `section-header-quality`: Added default thresholds (<=25% generic pass,
+  25-50% warn, >50% fail) and clarified that evaluation covers both
+  within-group and cross-group header repetition.
+- `cache-header-hygiene`: Added exception for responses with `ETag` or
+  `Last-Modified` but no `Cache-Control`/`Expires`. These validation
+  headers enable conditional revalidation and should not be penalized.
+- `rendering-strategy`: Clarified that the note about downstream checks
+  (`page-size-html`, `content-start-position`) being unreliable is guidance
+  for report consumers, not an implementation dependency requirement.
 
 ### v0.2.0 (2026-03-15)
 

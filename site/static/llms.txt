@@ -6,3 +6,7 @@
 
 - [Full Spec](https://agentdocsspec.com/spec/index.md): The complete specification with all checks, thresholds, and implementation guidance.
 - [Home](https://agentdocsspec.com/index.md): Overview, quick start guide, and background links.
+
+## Tools
+
+- [afdocs](https://github.com/agent-ecosystem/afdocs): CLI tool and Node.js library that implements this spec. Run `npx afdocs check <url>` to test a documentation site.

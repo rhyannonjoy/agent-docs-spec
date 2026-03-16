@@ -46,6 +46,20 @@ If you can only do a few things, these have the highest impact:
 6. **Monitor your agent-facing resources.** Keep `llms.txt` fresh, verify
    markdown parity, and check cache headers.
 
+## Test Your Docs
+
+[`afdocs`](https://github.com/agent-ecosystem/afdocs) is a companion CLI tool
+and Node.js library that implements this spec. It runs all 22 checks against
+your documentation site and reports what's working, what's not, and what to fix.
+
+```bash
+npx afdocs check https://docs.example.com
+```
+
+Install it from [npm](https://www.npmjs.com/package/afdocs) or see the
+[GitHub repo](https://github.com/agent-ecosystem/afdocs) for library usage
+and CI integration.
+
 ## Background
 
 This spec grew out of findings from two research articles on agent

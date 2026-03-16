@@ -5,7 +5,7 @@ docs agent-friendly. The spec focuses on meeting the technical constraints of
 agent platforms (truncation limits, content negotiation, discovery); it does not
 consider qualitative evaluation of content.
 
-**Status**: Draft (v0.2.0)
+**Status**: Draft (v0.2.1)
 
 **Full spec**: [SPEC.md](SPEC.md) | **Website**: [agentdocsspec.com](https://agentdocsspec.com)
 
@@ -62,6 +62,20 @@ If you can only do a few things, these have the highest impact:
 6. **Monitor your agent-facing resources.** Keep `llms.txt` fresh, verify
    markdown parity, and check cache headers.
    ([Details](SPEC.md#category-7-observability-and-content-health))
+
+## Test Your Docs
+
+[`afdocs`](https://github.com/agent-ecosystem/afdocs) is a companion CLI tool
+and Node.js library that implements this spec. It runs all 22 checks against
+your documentation site and reports what's working, what's not, and what to fix.
+
+```bash
+npx afdocs check https://docs.example.com
+```
+
+Install it from [npm](https://www.npmjs.com/package/afdocs) or see the
+[GitHub repo](https://github.com/agent-ecosystem/afdocs) for library usage
+and CI integration.
 
 ## Background
 
