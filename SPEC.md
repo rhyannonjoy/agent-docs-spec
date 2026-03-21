@@ -1191,6 +1191,7 @@ becomes available.
 **Thank you to contributors!**
 
 - Claude API (web_fetch tool) limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
+- Cursor limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
 - Google Gemini (URL context) limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
 - OpenAI (web search) limitations contributed by [Rhyannon Rodriguez](https://rhyannonjoy.github.io/agent-ecosystem-testing/)
 
